@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Reunion Seating Memory Game</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Segoe UI', sans-serif;
+            background-color: #f0e6d2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 { color: #4a3728; margin-bottom: 5px; text-shadow: 1px 1px #fff; }
+        .subtitle { color: #6b533e; margin-bottom: 25px; font-style: italic; }
+
+        /* Name Bank Styles */
+        .name-bank-container {
+            background-color: #fffde6;
+            border: 2px dashed #b5a486;
+            border-radius: 8px;
+            padding: 15px;
+            max-width: 900px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .name-bank-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4a3728;
+            margin-bottom: 10px;
+            text-align: center;
+            text-transform: uppercase;
+        }
+        .name-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 15px;
+            justify-content: center;
+        }
+        .classmate-name {
+            background: #fff;
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid #d7a15c;
+            font-size: 14px;
+            color: #333;
+            transition: all 0.2s ease;
+        }
+        /* Style for when a name is used in the grid */
+        .classmate-name.used {
+            text-decoration: line-through;
+            background-color: #e2dbcd;
+            color: #8c8273;
+            border-color: #b5a486;
+            opacity: 0.6;
+        }
+
+        /* The Blackboard/Front of the Class */
+        .blackboard {
+            background-color: #1e3f20;
+            color: #fff;
+            border: 8px solid #6b533e;
+            border-radius: 4px;
+            padding: 15px 60px;
+            font-size: 20px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-bottom: 40px;
+            text-align: center;
+            width: 760px;
+        }
+
+        /* Classroom Seating Grid (8 desks wide) */
+        .classroom-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 110px); 
+            gap: 20px 15px;
+            background: #e8dcbf;
+            padding: 25px;
+            border-radius: 15px;
+            border: 3px dashed #b5a486;
+        }
+
+        /* School Desk Style */
+        .desk-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #d7a15c;
+            border: 2px solid #a67332;
+            border-radius: 4px;
+            padding: 8px;
+            height: 70px;
+            box-shadow: 0 4px 0 #8a5a22;
+            transition: all 0.2s ease;
+        }
+
+        .desk-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #fff;
+            background-color: rgba(0,0,0,0.2);
+            padding: 2px 6px;
+            border-radius: 10px;
+            width: 80%;
+            text-align: center;
+        }
+
+        .desk-box input {
+            width: 90%;
+            padding: 4px 2px;
+            text-align: center;
+            border: 1px solid #7c5323;
+            border-radius: 3px;
+            font-size: 13px;
+            background-color: #fffde6;
+        }
+
+        /* Feedback States */
+        .desk-box.correct {
+            background-color: #7bc07b;
+            border-color: #3b7a3b;
+            box-shadow: 0 4px 0 #2d5c2d;
+        }
+        .desk-box.correct .desk-label { background-color: rgba(0,0,0,0.1); }
+
+        .desk-box.wrong {
+            background-color: #e57373;
+            border-color: #b71c1c;
+            box-shadow: 0 4px 0 #7f1010;
+        }
+
+        /* Bottom Controls */
+        .controls {
+            margin-top: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        button {
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background-color: #4a3728;
+            border: 2px solid #33251a;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #281e16;
+        }
+        button:hover { background-color: #5c4533; }
+        button:active { transform: translateY(4px); box-shadow: none; }
+        
+        #score-display {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4a3728;
+            min-height: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1> SMA N 68 Kelas XII IPS 3 2006</h1>
+    <div class="subtitle">Ingat gak kamu duduk di mana?</div>
+
+    <!-- Name Bank Section -->
+    <div class="name-bank-container">
+        <div class="name-bank-title">📋 Absen kehadiran (Daftar Nama)</div>
+        <div class="name-bank" id="nameBank"></div>
+    </div>
+
+    <!-- Front of the Class Indicator -->
+    <div class="blackboard">📝 PAPAN TULIS DEPAN KELAS 📝</div>
+
+    <!-- The Classroom Grid -->
+    <div class="classroom-grid" id="classroom"></div>
+
+    <div class="controls">
+        <button onclick="checkClassroom()">Submit Seating Chart</button>
+        <div id="score-display"></div>
+    </div>
+
+    <script>
+        // MASTER SEATING CHART (40 Desks)
+        // Swap these generic names out for your actual classmates!
+        const originalSeating = {
+            "Desk 1": "Nadia",    "Desk 2": "Katya",     "Desk 3": "Dessy",   "Desk 4": "Shakina",
+            "Desk 5": "Dudung",   "Desk 6": "Nanda",   "Desk 7": "Kosong",   "Desk 8": "Putri (Pindah)",
+            "Desk 9": "Q-benk","Desk 10": "Iqbal",  "Desk 11": "Nana",  "Desk 12": "Inesh",
+            "Desk 13": "Wita",    "Desk 14": "Gemma",   "Desk 15": "Husna", "Desk 16": "Donda",
+            "Desk 17": "Eri",  "Desk 18": "Hiro",   "Desk 19": "Marsya", "Desk 20": "Nyanya",
+            "Desk 21": "Bang Jek",    "Desk 22": "Icut", "Desk 23": "Janeth",  "Desk 24": "Justina",
+            "Desk 25": "Athan",   "Desk 26": "Adhe",   "Desk 27": "Johnny",  "Desk 28": "Janjun",
+            "Desk 29": "Cipta",  "Desk 30": "Bobby",  "Desk 31": "Martina",  "Desk 32": "Sarah",
+            "Desk 33": "Kosong",  "Desk 34": "Ezra", "Desk 35": "Engle Willem",    "Desk 36": "Seno",
+            "Desk 37": "Mulki",  "Desk 38": "Carlo", "Desk 39": "Kosong",  "Desk 40": "Kosong"
+        };
+
+        const classroomContainer = document.getElementById('classroom');
+        const nameBankContainer = document.getElementById('nameBank');
+
+        // 1. Generate Alphabetical Name Bank
+        const sortedNames = Object.values(originalSeating).sort((a, b) => a.localeCompare(b));
+        
+        sortedNames.forEach(name => {
+            const nameBadge = document.createElement('span');
+            nameBadge.className = 'classmate-name';
+            // Use data attributes to match lowercase values easily later
+            nameBadge.setAttribute('data-name', name.toLowerCase());
+            nameBadge.innerText = name;
+            nameBankContainer.appendChild(nameBadge);
+        });
+
+        // 2. Generate the 40 School Desks
+        Object.keys(originalSeating).forEach(deskId => {
+            const deskBox = document.createElement('div');
+            deskBox.className = 'desk-box';
+            deskBox.id = `box-${deskId}`;
+
+            deskBox.innerHTML = `
+                <span class="desk-label">${deskId}</span>
+                <input type="text" id="input-${deskId}" placeholder="Type name..." autocomplete="off" oninput="updateNameBank()">
+            `;
+
+            classroomContainer.appendChild(deskBox);
+        });
+
+        // 3. Dynamic Strikethrough Logic
+        function updateNameBank() {
+            // Gather all current inputs down in the room grid
+            const currentInputs = [];
+            Object.keys(originalSeating).forEach(deskId => {
+                const val = document.getElementById(`input-${deskId}`).value.trim().toLowerCase();
+                if(val) currentInputs.push(val);
+            });
+
+            // Look at every badge in the bank and cross it off if it's currently in a desk
+            const badges = document.querySelectorAll('.classmate-name');
+            badges.forEach(badge => {
+                const badgeName = badge.getAttribute('data-name');
+                if (currentInputs.includes(badgeName)) {
+                    badge.classList.add('used');
+                } else {
+                    badge.classList.remove('used');
+                }
+            });
+        }
+
+        // 4. Submit Game Logic
+        function checkClassroom() {
+            let correctCount = 0;
+            const totalDesks = Object.keys(originalSeating).length;
+
+            Object.keys(originalSeating).forEach(deskId => {
+                const userInput = document.getElementById(`input-${deskId}`).value.trim().toLowerCase();
+                const correctAnswer = originalSeating[deskId].toLowerCase();
+                const deskBox = document.getElementById(`box-${deskId}`);
+
+                if (userInput === correctAnswer) {
+                    deskBox.className = 'desk-box correct';
+                    correctCount++;
+                } else if (userInput === "") {
+                    deskBox.className = 'desk-box'; 
+                } else {
+                    deskBox.className = 'desk-box wrong';
+                }
+            });
+
+            // Update Score Screen
+            const scoreDisplay = document.getElementById('score-display');
+            scoreDisplay.innerText = `Class Score: ${correctCount} / ${totalDesks}`;
+            
+            if(correctCount === totalDesks) {
+                scoreDisplay.innerHTML = "🎉 100%! The gang's all here and accounted for! 🎉";
+                scoreDisplay.style.color = "#2d5c2d";
+            } else {
+                scoreDisplay.style.color = "#4a3728";
+            }
+        }
+    </script>
+</body>
+</html>
